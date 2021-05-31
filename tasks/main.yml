@@ -1,0 +1,84 @@
+---
+
+- name: Update repositories cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 28800
+
+- name: Installed package
+  ansible.builtin.package:
+    name:
+    - git
+    - rsync
+    - pigz
+    state: latest
+
+- name: Install from github
+  ansible.builtin.git:
+    repo: git@github.com:Rupreht/silver-parakeet.git
+    dest: /usr/src/silver-parakeet
+    version: 'master'
+
+# Add users
+- name: Add group
+  ansible.builtin.group:
+    name: backuppc
+    gid: 10000
+    state: present
+
+- name: Add user
+  ansible.builtin.user:
+    name:     backuppc
+    comment:  'system user'
+    expires:  -1
+    home:     /home/backuppc
+    shell:    /bin/sh
+    uid:      '10000'
+    group:    '10000'
+    create_home: yes
+    groups:
+    - disk
+    - backup
+
+- name: Set authorized key taken from file
+  authorized_key:
+    user: backuppc
+    state: present
+    key: "{{ lookup('file', '{{playbook_dir}}/public_keys/backuppc.pub') }}"
+
+- name: Sudoers Linux | update sudoers file and validate
+  lineinfile:
+    dest: /etc/sudoers
+    line: 'backuppc ALL=(ALL) NOPASSWD: /usr/bin/rsync'
+    regexp: '^backuppc .*'
+    validate: 'visudo -cf %s'
+
+- name: Fix dirs
+  ansible.builtin.file:
+    path:  '{{ item.path }}'
+    mode:  '{{ item.mode }}'
+    owner: "{{ item.owner | default('backuppc') }}"
+    group: "{{ item.group | default('backuppc') }}"
+    state: directory
+  with_items:
+  - { path: '/home/backuppc', mode: '0700' }
+  - { path: '/home/backuppc/.config', mode: '0750' }
+  - { path: '/var/lib/backup', mode: '0700' }
+
+- name: Create a symbolic link
+  ansible.builtin.file:
+    src:   '{{ item.src }}'
+    dest:  '{{ item.dest }}'
+    state: link
+  with_items:
+  - { src: '/usr/src/silver-parakeet/dumpdb.sh', dest: '/usr/local/bin/dumpdb.sh' }
+
+- name: Add files
+  copy:
+    src:   '{{ item.src }}'
+    dest:  '{{ item.dest }}'
+    mode:  '{{ item.mode  | default(omit) }}'
+    owner: '{{ item.owner | default(omit) }}'
+    group: '{{ item.group | default(omit) }}'
+  with_items:
+  - { src: ../files/dumpdb.sh.config, dest: /home/backuppc/.config/dumpdb.sh.config }
