@@ -15,7 +15,7 @@
 
 - name: Install from github
   ansible.builtin.git:
-    repo: git@github.com:Rupreht/silver-parakeet.git
+    repo: https://github.com/Rupreht/silver-parakeet.git
     dest: /usr/src/silver-parakeet
     version: 'master'
 
@@ -64,6 +64,7 @@
   - { path: '/home/backuppc', mode: '0700' }
   - { path: '/home/backuppc/.config', mode: '0750' }
   - { path: '/var/lib/backup', mode: '0700' }
+  - { path: '/var/lib/backup/mysql', mode: '0700' }
 
 - name: Create a symbolic link
   ansible.builtin.file:
@@ -82,3 +83,17 @@
     group: '{{ item.group | default(omit) }}'
   with_items:
   - { src: ../files/dumpdb.sh.config, dest: /home/backuppc/.config/dumpdb.sh.config }
+
+- name: Setup .my.cnf
+  ini_file:
+    path:    /home/backuppc/.my.cnf
+    section: "{{ item.section }}"
+    option:  "{{ item.option }}"
+    value:   "{{ item.value }}"
+    no_extra_spaces: yes
+  with_items:
+  - { section: "client", option: "user",     value: 'root' }
+  - { section: "client", option: "host",     value: 'localhost' }
+  - { section: "client", option: "password", value: '{{ mariadb_root_password }}' }
+  when:
+  - mariadb_version is defined
