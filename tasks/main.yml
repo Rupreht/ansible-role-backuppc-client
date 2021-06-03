@@ -97,3 +97,11 @@
   - { section: "client", option: "password", value: '{{ mariadb_root_password }}' }
   when:
   - mariadb_version is defined
+
+- name: Create a file
+  ansible.builtin.file:
+    path: /var/lib/backup/mysql/.keep
+    state: touch
+    mode: '0644'
+    modification_time: preserve
+    access_time: preserve
