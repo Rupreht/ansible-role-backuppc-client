@@ -4,6 +4,7 @@
   apt:
     update_cache: yes
     cache_valid_time: 28800
+  when: ansible_os_family == 'Debian'
 
 - name: Installed package
   ansible.builtin.package:
@@ -20,11 +21,14 @@
     version: 'master'
 
 # Add users
-- name: Add group
+- name: Add groups
   ansible.builtin.group:
-    name: backuppc
-    gid: 10000
+    name: '{{ item.name }}'
+    gid: '{{ item.gid }}'
     state: present
+  with_items:
+  - { name: backup, gid: 34 }
+  - { name: backuppc, gid: 10000 }
 
 - name: Add user
   ansible.builtin.user:
