@@ -105,3 +105,13 @@
     mode: '0644'
     modification_time: preserve
     access_time: preserve
+
+# MYSQL_DUMP_SKIP_DATABASES="${DBDUMP_HOME_FOLDER}/dumpdb_excluded_databases.txt"
+# MYSQL_DUMP_SKIP_TABLES="${DBDUMP_HOME_FOLDER}/dumpdb_excluded_tables"
+# MYSQL_DUMP_BIG_TABLES="${DBDUMP_HOME_FOLDER}/dumpdb_big_tables"
+# mysqldump --ignore-table
+
+# /var/lib/backup/dumpdb_excluded_databases.txt
+# /var/lib/backup/dumpdb_excluded_tables.status.txt
+# /var/lib/backup/dumpdb_excluded_tables.otr.txt
+# /var/lib/backup/dumpdb_big_tables.rt.txt
