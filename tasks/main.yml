@@ -114,7 +114,7 @@
 # /{{ backuppc_backup_dir }}/dumpdb_big_tables.rt.txt
 
 - name: Clean Dumpdb Excluded
-  ansible.builtin.shell: "/usr/bin/rm -f {{ backuppc_backup_dir }}/dumpdb_excluded_*"
+  ansible.builtin.shell: "rm -f {{ backuppc_backup_dir }}/dumpdb_excluded_*"
   args:
     warn: no
 
@@ -126,7 +126,7 @@
     owner: backuppc
     group: backuppc
     mode: 0644
-  when: backuppc_exclude_mysql.db
+  when: backuppc_exclude_mysql.db is defined
 
 # /{{ backuppc_backup_dir }}/dumpdb_excluded_tables.status.txt
 - name: Excluded Tables
@@ -137,4 +137,4 @@
     group: backuppc
     mode: 0644
   loop: "{{ backuppc_exclude_mysql.table|list }}"
-  when: backuppc_exclude_mysql.table
+  when: backuppc_exclude_mysql.table is defined
