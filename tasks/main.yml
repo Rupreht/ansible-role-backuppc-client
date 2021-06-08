@@ -31,7 +31,7 @@
     name:     backuppc
     comment:  'system user'
     expires:  -1
-    home:     /home/backuppc
+    home:     '{{ backuppc_homedir }}'
     shell:    /bin/sh
     uid:      '10000'
     group:    '10000'
@@ -61,10 +61,10 @@
     group: "{{ item.group | default('backuppc') }}"
     state: directory
   with_items:
-  - { path: '/home/backuppc', mode: '0700' }
-  - { path: '/home/backuppc/.config', mode: '0750' }
-  - { path: '/var/lib/backup', mode: '0700' }
-  - { path: '/var/lib/backup/mysql', mode: '0700' }
+  - { path: '{{ backuppc_homedir }}', mode: '0700' }
+  - { path: '{{ backuppc_homedir }}/.config', mode: '0750' }
+  - { path: '{{ backuppc_backup_dir }}', mode: '0700' }
+  - { path: '{{ backuppc_backup_dir }}/mysql', mode: '0700' }
 
 - name: Create a symbolic link
   ansible.builtin.file:
@@ -82,11 +82,11 @@
     owner: '{{ item.owner | default(omit) }}'
     group: '{{ item.group | default(omit) }}'
   with_items:
-  - { src: ../files/dumpdb.sh.config, dest: /home/backuppc/.config/dumpdb.sh.config }
+  - { src: ../files/dumpdb.sh.config, dest: "{{ backuppc_homedir }}/.config/dumpdb.sh.config" }
 
 - name: Setup .my.cnf
   ini_file:
-    path:    /home/backuppc/.my.cnf
+    path:    "{{ backuppc_homedir }}/.my.cnf"
     section: "{{ item.section }}"
     option:  "{{ item.option }}"
     value:   "{{ item.value }}"
@@ -100,7 +100,7 @@
 
 - name: Create a file
   ansible.builtin.file:
-    path: /var/lib/backup/mysql/.keep
+    path: "{{ backuppc_backup_dir }}/mysql/.keep"
     state: touch
     mode: '0644'
     modification_time: preserve
@@ -111,7 +111,30 @@
 # MYSQL_DUMP_BIG_TABLES="${DBDUMP_HOME_FOLDER}/dumpdb_big_tables"
 # mysqldump --ignore-table
 
-# /var/lib/backup/dumpdb_excluded_databases.txt
-# /var/lib/backup/dumpdb_excluded_tables.status.txt
-# /var/lib/backup/dumpdb_excluded_tables.otr.txt
-# /var/lib/backup/dumpdb_big_tables.rt.txt
+# /{{ backuppc_backup_dir }}/dumpdb_big_tables.rt.txt
+
+- name: Clean Dumpdb Excluded
+  ansible.builtin.shell: "/usr/bin/rm -f {{ backuppc_backup_dir }}/dumpdb_excluded_*"
+  args:
+    warn: no
+
+# /{{ backuppc_backup_dir }}/dumpdb_excluded_tables.status.txt
+- name: Excluded Databases
+  template:
+    src: "excluded_databases.j2"
+    dest: "{{ backuppc_backup_dir }}/dumpdb_excluded_databases.txt"
+    owner: backuppc
+    group: backuppc
+    mode: 0644
+  when: backuppc_exclude_mysql.db
+
+# /{{ backuppc_backup_dir }}/dumpdb_excluded_tables.status.txt
+- name: Excluded Tables
+  template:
+    src: "excluded_tables.j2"
+    dest: "{{ backuppc_backup_dir }}/dumpdb_excluded_tables.{{ item }}.txt"
+    owner: backuppc
+    group: backuppc
+    mode: 0644
+  loop: "{{ backuppc_exclude_mysql.table|list }}"
+  when: backuppc_exclude_mysql.table

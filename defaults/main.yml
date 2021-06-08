@@ -1,2 +1,5 @@
 ---
 # defaults file for backuppc
+
+backuppc_homedir: "/home/backuppc"
+backuppc_backup_dir: "/var/lib/backup"
