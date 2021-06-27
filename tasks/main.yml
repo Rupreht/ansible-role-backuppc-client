@@ -44,6 +44,7 @@
     - disk
     - backup
 
+# ~/.ssh/authorized_keys
 - name: Set authorized key taken from file
   authorized_key:
     user: backuppc
