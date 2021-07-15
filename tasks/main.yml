@@ -19,6 +19,7 @@
     repo: https://github.com/Rupreht/silver-parakeet.git
     dest: /usr/src/silver-parakeet
     version: 'master'
+  tags: over_nat
 
 # Add users
 - name: Add groups
